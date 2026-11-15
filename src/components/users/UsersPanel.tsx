@@ -2,23 +2,32 @@ import { useId, useState } from 'react'
 import { useUsers } from '../../hooks/useUsers'
 import type { User } from '../../types/domain'
 import { ErrorMessage } from '../common/ErrorMessage'
+import { ListSkeleton } from '../common/ListSkeleton'
 import { SearchBox } from '../common/SearchBox'
 import { filterUsersByName } from './filterUsers'
 import { UserList } from './UserList'
-import { UserListSkeleton } from './UserListSkeleton'
+
+interface UsersPanelProps {
+  selectedUserId: number | null
+  onSelectUser: (user: User) => void
+}
 
 /**
  * Contenedor: obtiene los usuarios, gestiona la búsqueda y decide qué estado pintar.
- * La presentación se delega en componentes que solo reciben props.
+ * La selección la gestiona el padre (`App`), que la comparte con las publicaciones.
  */
-export function UsersPanel() {
+export function UsersPanel({ selectedUserId, onSelectUser }: UsersPanelProps) {
   const headingId = useId()
   const { state, retry } = useUsers()
   // Filtrado en memoria en cada pulsación: con pocos elementos no hace falta debounce.
   const [query, setQuery] = useState('')
 
   return (
-    <section aria-labelledby={headingId} aria-busy={state.status === 'loading'}>
+    <section
+      className="panel"
+      aria-labelledby={headingId}
+      aria-busy={state.status === 'loading'}
+    >
       <h2 id={headingId}>Usuarios</h2>
 
       <SearchBox
@@ -28,7 +37,7 @@ export function UsersPanel() {
         placeholder="Ej.: Leanne"
       />
 
-      {state.status === 'loading' && <UserListSkeleton />}
+      {state.status === 'loading' && <ListSkeleton label="Cargando usuarios…" />}
 
       {state.status === 'error' && (
         <ErrorMessage message="No se pudieron cargar los usuarios." onRetry={retry} />
@@ -39,19 +48,21 @@ export function UsersPanel() {
           users={filterUsersByName(state.data, query)}
           total={state.data.length}
           query={query}
+          selectedUserId={selectedUserId}
+          onSelectUser={onSelectUser}
         />
       )}
     </section>
   )
 }
 
-interface UserResultsProps {
+interface UserResultsProps extends UsersPanelProps {
   users: User[]
   total: number
   query: string
 }
 
-function UserResults({ users, total, query }: UserResultsProps) {
+function UserResults({ users, total, query, selectedUserId, onSelectUser }: UserResultsProps) {
   return (
     <>
       {/* `role="status"`: los lectores de pantalla anuncian el nº de resultados al filtrar. */}
@@ -60,7 +71,7 @@ function UserResults({ users, total, query }: UserResultsProps) {
       </p>
 
       {users.length > 0 ? (
-        <UserList users={users} />
+        <UserList users={users} selectedUserId={selectedUserId} onSelectUser={onSelectUser} />
       ) : (
         <p className="empty-state">Ningún usuario coincide con «{query.trim()}».</p>
       )}

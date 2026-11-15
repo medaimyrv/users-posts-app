@@ -20,6 +20,10 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 | Estado de carga | **Skeleton** con la forma de la lista + texto "Cargando…" solo para lectores de pantalla (`role="status"`) | Spinner, solo texto | Reduce la espera percibida y evita saltos de layout. El skeleton es decorativo (`aria-hidden`) y respeta `prefers-reduced-motion`. |
 | Búsqueda | En el cliente, **en cada pulsación**, sin distinguir mayúsculas ni tildes | Debounce, búsqueda en servidor | La API solo tiene 10 usuarios y no ofrece búsqueda parcial, así que se filtra en memoria la lista ya cargada. Un debounce solo añadiría retraso; lo usaría si la búsqueda pasara al servidor o la lista fuera muy grande. |
 | Componentes | Contenedor (`UsersPanel`: datos y búsqueda) + presentacionales (`UserList`, `UserListSkeleton`, `SearchBox`, `ErrorMessage`) + lógica pura (`filterUsersByName`) | Un solo componente grande | Responsabilidad única. Los presentacionales son reutilizables y la lógica pura se testea sin renderizar. |
+| Usuario seleccionado | **`useState` en `App`** + props (estado subido al padre común) | Context, React Router (`/users/:id`) | Lo comparten dos componentes hermanos a un solo nivel, así que no hay *prop drilling*. Context lo reservo para algo de verdad global, el tema claro u oscuro. Router daría URL compartible y botón atrás (ver "Qué haría con más tiempo"). |
+| Reinicio al cambiar de usuario | `<PostsPanel key={user.id} />` | Sincronizar el estado en un efecto | Cambiar la `key` hace que React monte el componente de nuevo: el estado vuelve a `loading` y el cleanup cancela la petición anterior. |
+| Disposición | **Maestro-detalle, mobile-first**: una columna en móvil y dos desde 48rem | Vista de detalle con botón "Volver" | Lista y publicaciones visibles a la vez en escritorio. En móvil, al seleccionar, el foco pasa al título de las publicaciones y la vista se desplaza hasta ellas. |
+| Accesibilidad de la selección | Usuarios como `<button aria-pressed>`; foco programático al `h2` (`tabIndex={-1}`) | `<li onClick>` | Manejable con teclado y el lector de pantalla anuncia cuál está seleccionado y el cambio de contenido. Área táctil de 44 px o más. |
 | Arquitectura | `types/` (dominio), `api/` (transporte y endpoints), `hooks/` (ciclo de vida de los datos) | Todo dentro de los componentes | Responsabilidad única: los componentes solo pintan. `useAsyncData` recibe la función de carga como parámetro, así que sirve para cualquier endpoint sin modificarlo (abierto/cerrado). |
 
 **Principios generales:** código claro, buenas prácticas de UX/UI y accesibilidad, y principios SOLID aplicados con criterio, sin ser puristas.
@@ -53,6 +57,12 @@ He usado Claude Code (Claude Opus 5.5) como asistente durante toda la prueba, tr
 - **Qué le pedí:** opciones para mostrar la carga y para decidir cuándo filtrar.
 - **Qué acepté:** el skeleton (su recomendación), la búsqueda sin distinguir mayúsculas ni tildes, el contador de resultados anunciado a lectores de pantalla, el mensaje de "sin resultados" y la separación entre contenedor y componentes presentacionales.
 - **Qué corregí o decidí distinto:** la IA recomendaba filtrar en cada pulsación, sin debounce. Primero elegí añadir debounce con un custom hook (`useDebouncedValue`) para demostrar el patrón. Al revisarlo me di cuenta de que el filtro se hace en memoria sobre la lista ya cargada, así que el debounce no ahorraba nada y solo retrasaba el resultado 300 ms. **Lo quité.**
+
+### Etapa 3: Publicaciones del usuario seleccionado
+- **Qué le pedí:** opciones para guardar el usuario seleccionado y para la disposición en pantalla.
+- **Qué acepté:** `useState` en `App` y el maestro-detalle (sus recomendaciones), el reinicio con `key`, los usuarios como botones con `aria-pressed`, el foco al título de las publicaciones y un skeleton reutilizable (`ListSkeleton`) para usuarios y publicaciones.
+- **Refactor:** en la etapa 2 el skeleton solo lo usaban los usuarios, así que era específico (`UserListSkeleton`). Al necesitarlo también las publicaciones, lo generalicé a `ListSkeleton` con un prop `label` en vez de duplicarlo. Prefiero abstraer cuando aparece un segundo caso real (YAGNI) antes que adivinarlo de antemano.
+- **Qué indiqué yo:** que el layout fuera **responsive mobile-first** y que Context se use para el **tema claro u oscuro**, como ejemplo de estado global (se implementa en la etapa de estilos).
 
 ## Qué haría con más tiempo
 
