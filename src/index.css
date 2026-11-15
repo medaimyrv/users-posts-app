@@ -1,0 +1,12 @@
+/* Estilos base mínimos. Los estilos de la app se definen en la etapa 6. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
