@@ -1,0 +1,27 @@
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* Los títulos de la API vienen en minúscula: capitaliza la primera letra. */
+.title::first-letter {
+  text-transform: uppercase;
+}
+
+.body {
+  color: var(--color-text-muted);
+}

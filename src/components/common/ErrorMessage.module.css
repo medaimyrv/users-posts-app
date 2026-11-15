@@ -1,0 +1,9 @@
+.error {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+}

@@ -3,9 +3,11 @@ import { useUsers } from '../../hooks/useUsers'
 import type { User } from '../../types/domain'
 import { ErrorMessage } from '../common/ErrorMessage'
 import { ListSkeleton } from '../common/ListSkeleton'
+import panelStyles from '../common/Panel.module.css'
 import { SearchBox } from '../common/SearchBox'
 import { filterUsersByName } from './filterUsers'
 import { UserList } from './UserList'
+import styles from './UsersPanel.module.css'
 
 interface UsersPanelProps {
   selectedUserId: number | null
@@ -24,11 +26,13 @@ export function UsersPanel({ selectedUserId, onSelectUser }: UsersPanelProps) {
 
   return (
     <section
-      className="panel"
+      className={panelStyles.panel}
       aria-labelledby={headingId}
       aria-busy={state.status === 'loading'}
     >
-      <h2 id={headingId}>Usuarios</h2>
+      <h2 id={headingId} className={panelStyles.heading}>
+        Usuarios
+      </h2>
 
       <SearchBox
         label="Buscar por nombre"
@@ -66,14 +70,14 @@ function UserResults({ users, total, query, selectedUserId, onSelectUser }: User
   return (
     <>
       {/* `role="status"`: los lectores de pantalla anuncian el nº de resultados al filtrar. */}
-      <p role="status" className="results-count">
+      <p role="status" className={styles.count}>
         {users.length === total ? `${total} usuarios` : `${users.length} de ${total} usuarios`}
       </p>
 
       {users.length > 0 ? (
         <UserList users={users} selectedUserId={selectedUserId} onSelectUser={onSelectUser} />
       ) : (
-        <p className="empty-state">Ningún usuario coincide con «{query.trim()}».</p>
+        <p className={panelStyles.empty}>Ningún usuario coincide con «{query.trim()}».</p>
       )}
     </>
   )

@@ -1,4 +1,5 @@
 import type { User } from '../../types/domain'
+import styles from './UserList.module.css'
 
 interface UserListProps {
   users: User[]
@@ -13,17 +14,17 @@ interface UserListProps {
  */
 export function UserList({ users, selectedUserId, onSelectUser }: UserListProps) {
   return (
-    <ul className="user-list">
+    <ul className={styles.list}>
       {users.map((user) => (
         <li key={user.id}>
           <button
             type="button"
-            className="user-item"
+            className={styles.item}
             aria-pressed={user.id === selectedUserId}
             onClick={() => onSelectUser(user)}
           >
-            <span className="user-name">{user.name}</span>
-            <span className="user-meta">{user.email}</span>
+            <span className={styles.name}>{user.name}</span>
+            <span className={styles.meta}>{user.email}</span>
           </button>
         </li>
       ))}

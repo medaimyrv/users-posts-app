@@ -1,0 +1,46 @@
+.app {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+/* Mobile-first: una columna; maestro-detalle desde 48rem (~768px). */
+.layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .app {
+    padding: var(--space-6);
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(16rem, 1fr) 2fr;
+    align-items: start;
+  }
+
+  /* En escritorio la lista de usuarios queda fija al hacer scroll por las publicaciones. */
+  .sidebar {
+    position: sticky;
+    top: var(--space-6);
+  }
+}

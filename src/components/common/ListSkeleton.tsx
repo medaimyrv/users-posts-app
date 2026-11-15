@@ -1,3 +1,5 @@
+import styles from './ListSkeleton.module.css'
+
 interface ListSkeletonProps {
   /** Texto anunciado a lectores de pantalla, p. ej. "Cargando usuarios…". */
   label: string
@@ -15,11 +17,11 @@ export function ListSkeleton({ label, rows = 5 }: ListSkeletonProps) {
       <p role="status" className="sr-only">
         {label}
       </p>
-      <ul className="skeleton-list" aria-hidden="true">
+      <ul className={styles.list} aria-hidden="true">
         {Array.from({ length: rows }, (_, index) => (
-          <li key={index} className="skeleton-item">
-            <span className="skeleton skeleton-line" />
-            <span className="skeleton skeleton-line skeleton-line--short" />
+          <li key={index} className={styles.item}>
+            <span className={styles.line} />
+            <span className={`${styles.line} ${styles.short}`} />
           </li>
         ))}
       </ul>

@@ -33,6 +33,11 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 | Test runner | **Vitest** + jsdom | Jest | Comparte configuración con Vite (TS y JSX sin configurar nada) y su API es compatible con Jest. Jest en Vite pide Babel o `ts-jest` y configuración de ESM. |
 | Estilo de tests | **Testing Library + user-event**: tests de integración sobre `App`, buscando por *role* y *label* | Tests unitarios de cada componente con mocks | Prueban el comportamiento que ve el usuario, no la implementación, y de paso verifican la accesibilidad (si no se encuentra por *role* o *label*, un lector de pantalla tampoco lo encontraría). El esquema Zod se prueba aparte, como función pura. |
 | Simulación de la API | **MSW** (Mock Service Worker) | `vi.mock` del módulo de la API, mockear axios | Intercepta las peticiones HTTP reales, así que se prueba toda la cadena (componente → hook → axios → red). Si se cambia axios por `fetch`, los tests siguen valiendo. `onUnhandledFrame: 'error'` evita peticiones reales accidentales. |
+| Estilos | **CSS Modules** (un `.module.css` por componente) + **variables CSS** como tokens de diseño en `styles/global.css` | Tailwind, CSS global plano | Vienen con Vite sin instalar nada. Las clases tienen ámbito local (sin colisiones) y cada componente lleva su CSS al lado. El CSS global se limita a tokens, reset y utilidades (`.sr-only`, `:focus-visible`). |
+| Tema claro/oscuro | **Context** (`ThemeProvider` + hook `useTheme`) que pone `data-theme` en `<html>`; las variables CSS cambian de valor | Clase `dark:` de Tailwind, prop drilling | Ejemplo de **estado global con Context**, elegido a propósito para demostrarlo. Los componentes no saben nada del tema: solo usan variables. Valor del contexto memorizado con `useMemo`, sintaxis de React 19 `<ThemeContext value>` y `useTheme` lanza un error claro si falta el provider. |
+| Tema inicial y persistencia | **Preferencia del sistema** (`prefers-color-scheme`) + elección del usuario guardada en **`localStorage`** | Claro por defecto, sin persistir | Respeta el sistema la primera vez y recuerda la elección. Un script mínimo en `index.html` aplica el tema antes de pintar, para que no haya destello de tema claro. Solo se guarda cuando el usuario elige. `try/catch` por si `localStorage` no está disponible. |
+| Botón de tema | `<button aria-pressed>` con etiqueta fija "Tema oscuro" e icono SVG decorativo (`aria-hidden`) | Etiqueta que cambia ("Modo claro" / "Modo oscuro") | Patrón de *toggle button* de WAI-ARIA: el lector anuncia "Tema oscuro, pulsado / no pulsado". |
+| Accesibilidad visual | Contraste de texto ≥ 4.5:1 (WCAG AA) en ambos temas (comprobado con un script), foco visible con `:focus-visible`, estados que no dependen solo del color (barra lateral en el seleccionado, borde doble en campos con error y texto del error), áreas táctiles ≥ 44 px y `prefers-reduced-motion` | — | Buenas prácticas de UX/UI y accesibilidad. |
 | Arquitectura | `types/` (dominio), `api/` (transporte y endpoints), `hooks/` (ciclo de vida de los datos) | Todo dentro de los componentes | Responsabilidad única: los componentes solo pintan. `useAsyncData` recibe la función de carga como parámetro, así que sirve para cualquier endpoint sin modificarlo (abierto/cerrado). |
 
 **Principios generales:** código claro, buenas prácticas de UX/UI y accesibilidad, y principios SOLID aplicados con criterio, sin ser puristas.
@@ -89,7 +94,13 @@ He usado Claude Code (Claude Opus 5.5) como asistente durante toda la prueba, tr
   - **Bug real en el formulario:** llamar a `reset()` dentro de `handleSubmit` hacía que RHF dejara `isSubmitSuccessful` en `false` y no aparecía "Publicación creada.". Se cambió al patrón que recomienda la documentación de RHF: `reset` en un `useEffect` que reacciona a `isSubmitSuccessful`.
   - **CORS en los mocks:** jsdom aplica CORS como un navegador. Sin cabeceras `Access-Control-Allow-*` en las respuestas de MSW (ni respuesta al *preflight* `OPTIONS` del POST), axios recibía "Network Error". La API real las envía, así que los mocks ahora también.
   - **Cambio de API en MSW 3:** la opción `onUnhandledRequest` ahora se llama `onUnhandledFrame`. El typecheck lo detectó.
-  - **Entorno:** en Windows, ejecutar Vitest desde Git Bash (`/d/...`, unidad en minúscula) da "failed to find the runner". Desde PowerShell o CMD funciona.
+  - **Entorno (Windows):** ejecutar Vitest desde Git Bash (`/d/...`, unidad en minúscula) da "failed to find the runner". Desde PowerShell o CMD funciona.
+
+### Etapa 6: Estilos, tema claro/oscuro y accesibilidad
+- **Qué le pedí:** opciones para escribir los estilos y para el tema inicial y su persistencia.
+- **Qué acepté:** CSS Modules con variables CSS, preferencia del sistema con `localStorage` (sus recomendaciones), el script anti-destello en `index.html`, el botón con `aria-pressed` y el repaso de accesibilidad (contraste comprobado, foco visible, estados que no dependen solo del color).
+- **Qué indiqué yo:** usar **Context para el tema claro/oscuro** como ejemplo de estado global (lo decidí en la etapa 3) y que hubiera un **botón** para cambiarlo.
+- **Tests:** se añadió un test del tema (alterna `data-theme` y guarda la elección), y los tests renderizan la app con su `ThemeProvider` igual que `main.tsx`.
 
 ## Qué haría con más tiempo
 

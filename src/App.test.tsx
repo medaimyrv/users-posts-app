@@ -6,6 +6,7 @@ import { API_BASE_URL } from './api/client'
 import App from './App'
 import { CORS_HEADERS } from './test/handlers'
 import { server } from './test/server'
+import { ThemeProvider } from './theme/ThemeProvider'
 
 /**
  * Tests de integración: renderizan la app completa y la usan como una persona
@@ -13,16 +14,42 @@ import { server } from './test/server'
  * La red la simula MSW, así que se prueba toda la cadena: componente → hook → axios.
  */
 
+/** Renderiza la app con sus providers, igual que `main.tsx`. */
+function renderApp() {
+  return render(
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>,
+  )
+}
+
 async function selectUser(user: ReturnType<typeof userEvent.setup>, name: RegExp) {
   await user.click(await screen.findByRole('button', { name }))
   // Espera a que carguen sus publicaciones (aparece el formulario).
   await screen.findByRole('form', { name: 'Nueva publicación' })
 }
 
+describe('Tema', () => {
+  it('alterna entre claro y oscuro y recuerda la elección', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const toggle = screen.getByRole('button', { name: 'Tema oscuro' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light')
+
+    await user.click(toggle)
+
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+    expect(localStorage.getItem('theme')).toBe('dark')
+  })
+})
+
 describe('Usuarios', () => {
   it('filtra por nombre sin distinguir mayúsculas ni tildes y avisa si no hay resultados', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
 
     expect(await screen.findByRole('button', { name: /Leanne Graham/ })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('3 usuarios')
@@ -47,7 +74,7 @@ describe('Usuarios', () => {
       }),
     )
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No se pudieron cargar los usuarios.')
@@ -62,7 +89,7 @@ describe('Usuarios', () => {
 describe('Publicaciones', () => {
   it('muestra las publicaciones del usuario seleccionado', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
 
     await selectUser(user, /Leanne Graham/)
 
@@ -73,7 +100,7 @@ describe('Publicaciones', () => {
 
   it('valida que título y texto son obligatorios y lleva el foco al primer error', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await selectUser(user, /Leanne Graham/)
 
     const title = screen.getByLabelText(/Título/)
@@ -96,7 +123,7 @@ describe('Publicaciones', () => {
 
   it('crea una publicación y la muestra la primera de la lista', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await selectUser(user, /Leanne Graham/)
 
     await user.type(screen.getByLabelText(/Título/), 'Mi nueva publicación')
@@ -118,7 +145,7 @@ describe('Publicaciones', () => {
       http.post(`${API_BASE_URL}/posts`, () => new HttpResponse(null, { status: 500, headers: CORS_HEADERS })),
     )
     const user = userEvent.setup()
-    render(<App />)
+    renderApp()
     await selectUser(user, /Leanne Graham/)
 
     await user.type(screen.getByLabelText(/Título/), 'No se guardará')

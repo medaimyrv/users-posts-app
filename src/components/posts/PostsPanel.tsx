@@ -4,6 +4,7 @@ import { useUserPosts } from '../../hooks/useUserPosts'
 import type { Post, User } from '../../types/domain'
 import { ErrorMessage } from '../common/ErrorMessage'
 import { ListSkeleton } from '../common/ListSkeleton'
+import panelStyles from '../common/Panel.module.css'
 import type { NewPostFormValues } from './newPostSchema'
 import { NewPostForm } from './NewPostForm'
 import { PostList } from './PostList'
@@ -43,11 +44,11 @@ export function PostsPanel({ user }: PostsPanelProps) {
 
   return (
     <section
-      className="panel"
+      className={panelStyles.panel}
       aria-labelledby={headingId}
       aria-busy={state.status === 'loading'}
     >
-      <h2 id={headingId} ref={headingRef} tabIndex={-1}>
+      <h2 id={headingId} ref={headingRef} tabIndex={-1} className={panelStyles.heading}>
         Publicaciones de {user.name}
       </h2>
 
@@ -64,7 +65,7 @@ export function PostsPanel({ user }: PostsPanelProps) {
           {createdPosts.length + state.data.length > 0 ? (
             <PostList posts={[...createdPosts, ...state.data]} />
           ) : (
-            <p className="empty-state">Este usuario todavía no tiene publicaciones.</p>
+            <p className={panelStyles.empty}>Este usuario todavía no tiene publicaciones.</p>
           )}
         </>
       )}

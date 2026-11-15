@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useId } from 'react'
 import { useForm } from 'react-hook-form'
+import buttonStyles from '../common/Button.module.css'
+import styles from './NewPostForm.module.css'
 import { newPostSchema, type NewPostFormValues } from './newPostSchema'
 
 interface NewPostFormProps {
@@ -49,61 +51,76 @@ export function NewPostForm({ onCreate }: NewPostFormProps) {
 
   return (
     // `noValidate`: desactiva los globos nativos del navegador; los errores los pinta la app.
-    <form className="new-post-form" onSubmit={onSubmit} noValidate aria-labelledby={`${id}-heading`}>
-      <h3 id={`${id}-heading`}>Nueva publicación</h3>
+    <form className={styles.form} onSubmit={onSubmit} noValidate aria-labelledby={`${id}-heading`}>
+      <h3 id={`${id}-heading`} className={styles.heading}>
+        Nueva publicación
+      </h3>
+      <p>
+        Los campos marcados con <span className={styles.required}>*</span> son obligatorios.
+      </p>
 
-      <div className="field">
-        <label htmlFor={titleId}>
-          Título <span aria-hidden="true">*</span>
+      <div className={styles.field}>
+        <label htmlFor={titleId} className={styles.label}>
+          Título{' '}
+          <span className={styles.required} aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           id={titleId}
           type="text"
+          className={styles.input}
           aria-required="true"
           aria-invalid={errors.title ? true : undefined}
           aria-describedby={errors.title ? `${titleId}-error` : undefined}
           {...register('title')}
         />
         {errors.title && (
-          <p id={`${titleId}-error`} className="field-error">
+          <p id={`${titleId}-error`} className={styles.fieldError}>
             {errors.title.message}
           </p>
         )}
       </div>
 
-      <div className="field">
-        <label htmlFor={bodyId}>
-          Texto <span aria-hidden="true">*</span>
+      <div className={styles.field}>
+        <label htmlFor={bodyId} className={styles.label}>
+          Texto{' '}
+          <span className={styles.required} aria-hidden="true">
+            *
+          </span>
         </label>
         <textarea
           id={bodyId}
           rows={4}
+          className={`${styles.input} ${styles.textarea}`}
           aria-required="true"
           aria-invalid={errors.body ? true : undefined}
           aria-describedby={errors.body ? `${bodyId}-error` : undefined}
           {...register('body')}
         />
         {errors.body && (
-          <p id={`${bodyId}-error`} className="field-error">
+          <p id={`${bodyId}-error`} className={styles.fieldError}>
             {errors.body.message}
           </p>
         )}
       </div>
 
       {errors.root && (
-        <p role="alert" className="form-error">
+        <p role="alert" className={styles.formError}>
           {errors.root.message}
         </p>
       )}
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Publicando…' : 'Publicar'}
-      </button>
+      <div className={styles.actions}>
+        <button type="submit" className={buttonStyles.primary} disabled={isSubmitting}>
+          {isSubmitting ? 'Publicando…' : 'Publicar'}
+        </button>
 
-      {/* Siempre presente para que los lectores de pantalla anuncien el cambio de contenido. */}
-      <p role="status" className="form-success">
-        {isSubmitSuccessful ? 'Publicación creada.' : ''}
-      </p>
+        {/* Siempre presente para que los lectores de pantalla anuncien el cambio de contenido. */}
+        <p role="status" className={styles.success}>
+          {isSubmitSuccessful ? 'Publicación creada.' : ''}
+        </p>
+      </div>
     </form>
   )
 }

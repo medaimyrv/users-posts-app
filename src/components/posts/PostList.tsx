@@ -1,4 +1,5 @@
 import type { Post } from '../../types/domain'
+import styles from './PostList.module.css'
 
 interface PostListProps {
   posts: Post[]
@@ -7,12 +8,12 @@ interface PostListProps {
 /** Componente presentacional: cada publicación es un `<article>` con su título. */
 export function PostList({ posts }: PostListProps) {
   return (
-    <ul className="post-list">
+    <ul className={styles.list}>
       {posts.map((post) => (
         <li key={post.id}>
-          <article className="post-item">
-            <h3 className="post-title">{post.title}</h3>
-            <p className="post-body">{post.body}</p>
+          <article className={styles.item}>
+            <h3 className={styles.title}>{post.title}</h3>
+            <p className={styles.body}>{post.body}</p>
           </article>
         </li>
       ))}
