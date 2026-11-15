@@ -1,8 +1,11 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { createPost } from '../../api/jsonplaceholder'
 import { useUserPosts } from '../../hooks/useUserPosts'
-import type { User } from '../../types/domain'
+import type { Post, User } from '../../types/domain'
 import { ErrorMessage } from '../common/ErrorMessage'
 import { ListSkeleton } from '../common/ListSkeleton'
+import type { NewPostFormValues } from './newPostSchema'
+import { NewPostForm } from './NewPostForm'
 import { PostList } from './PostList'
 
 interface PostsPanelProps {
@@ -19,11 +22,24 @@ export function PostsPanel({ user }: PostsPanelProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const { state, retry } = useUserPosts(user.id)
 
+  // La API no guarda nada: las publicaciones creadas viven en estado local
+  // y se pintan delante de las cargadas (sin tocar `useAsyncData`).
+  const [createdPosts, setCreatedPosts] = useState<Post[]>([])
+  // La API devuelve siempre `id: 101`; para que las `key` no choquen usamos ids
+  // locales negativos, que nunca coinciden con los del servidor.
+  const nextLocalId = useRef(-1)
+
   // Al seleccionar un usuario, el foco va al título: los lectores de pantalla anuncian
   // el cambio y en móvil (columnas apiladas) la vista se desplaza hasta las publicaciones.
   useEffect(() => {
     headingRef.current?.focus()
   }, [])
+
+  async function handleCreate(values: NewPostFormValues) {
+    const created = await createPost({ ...values, userId: user.id })
+    const localPost: Post = { ...created, id: nextLocalId.current-- }
+    setCreatedPosts((previous) => [localPost, ...previous])
+  }
 
   return (
     <section
@@ -41,12 +57,17 @@ export function PostsPanel({ user }: PostsPanelProps) {
         <ErrorMessage message="No se pudieron cargar las publicaciones." onRetry={retry} />
       )}
 
-      {state.status === 'success' &&
-        (state.data.length > 0 ? (
-          <PostList posts={state.data} />
-        ) : (
-          <p className="empty-state">Este usuario todavía no tiene publicaciones.</p>
-        ))}
+      {state.status === 'success' && (
+        <>
+          <NewPostForm onCreate={handleCreate} />
+
+          {createdPosts.length + state.data.length > 0 ? (
+            <PostList posts={[...createdPosts, ...state.data]} />
+          ) : (
+            <p className="empty-state">Este usuario todavía no tiene publicaciones.</p>
+          )}
+        </>
+      )}
     </section>
   )
 }

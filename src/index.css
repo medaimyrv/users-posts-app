@@ -127,3 +127,50 @@ body {
 .post-item {
   padding: 0.75rem 0;
 }
+
+/* Formulario */
+.new-post-form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.field input,
+.field textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid #6b7280;
+  border-radius: 6px;
+}
+
+.field [aria-invalid='true'] {
+  border-color: #b91c1c;
+}
+
+.field-error,
+.form-error {
+  margin: 0;
+  color: #b91c1c;
+}
+
+.new-post-form button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.new-post-form button:disabled {
+  cursor: progress;
+}
+
+.form-success {
+  margin: 0;
+  color: #15803d;
+}

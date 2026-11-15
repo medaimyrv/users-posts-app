@@ -24,6 +24,10 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 | Reinicio al cambiar de usuario | `<PostsPanel key={user.id} />` | Sincronizar el estado en un efecto | Cambiar la `key` hace que React monte el componente de nuevo: el estado vuelve a `loading` y el cleanup cancela la petición anterior. |
 | Disposición | **Maestro-detalle, mobile-first**: una columna en móvil y dos desde 48rem | Vista de detalle con botón "Volver" | Lista y publicaciones visibles a la vez en escritorio. En móvil, al seleccionar, el foco pasa al título de las publicaciones y la vista se desplaza hasta ellas. |
 | Accesibilidad de la selección | Usuarios como `<button aria-pressed>`; foco programático al `h2` (`tabIndex={-1}`) | `<li onClick>` | Manejable con teclado y el lector de pantalla anuncia cuál está seleccionado y el cambio de contenido. Área táctil de 44 px o más. |
+| Formulario | **React Hook Form + Zod** (`@hookform/resolvers`) | `useState` a mano, RHF solo | Elegido **a propósito para demostrar el estándar de la industria**: con 2 campos bastaría con `useState`. El esquema Zod es la única fuente de verdad: reglas y tipo (`z.infer`). `.trim()` rechaza títulos con solo espacios y el esquema se puede testear sin renderizar. |
+| Momento de validar | **Al enviar y, después, al corregir** (`mode: 'onSubmit'` + `reValidateMode: 'onChange'`, el comportamiento por defecto de RHF) | Al salir de cada campo, solo al enviar | No muestra errores mientras se escribe por primera vez; tras el primer intento, el error desaparece al corregir. El foco va al primer campo inválido. Errores enlazados con `aria-invalid` y `aria-describedby`, y `noValidate` para no mezclarlos con los globos nativos. |
+| Añadir la publicación | **Esperar la respuesta del POST** y guardarla en un `useState` local (`createdPosts`) que se pinta delante de las cargadas | Actualización optimista | Solo aparece si la API responde bien. El botón pasa a "Publicando…" y se deshabilita para evitar dobles envíos. Si falla, se muestra un error y se conserva lo escrito. No hace falta tocar `useAsyncData`. |
+| `id` de las publicaciones creadas | Ids locales negativos (`-1`, `-2`…) | Usar el `id` de la API | La API devuelve siempre `id: 101`: con dos publicaciones creadas chocarían las `key` de React. Los negativos nunca coinciden con los del servidor. |
 | Arquitectura | `types/` (dominio), `api/` (transporte y endpoints), `hooks/` (ciclo de vida de los datos) | Todo dentro de los componentes | Responsabilidad única: los componentes solo pintan. `useAsyncData` recibe la función de carga como parámetro, así que sirve para cualquier endpoint sin modificarlo (abierto/cerrado). |
 
 **Principios generales:** código claro, buenas prácticas de UX/UI y accesibilidad, y principios SOLID aplicados con criterio, sin ser puristas.
@@ -63,6 +67,12 @@ He usado Claude Code (Claude Opus 5.5) como asistente durante toda la prueba, tr
 - **Qué acepté:** `useState` en `App` y el maestro-detalle (sus recomendaciones), el reinicio con `key`, los usuarios como botones con `aria-pressed`, el foco al título de las publicaciones y un skeleton reutilizable (`ListSkeleton`) para usuarios y publicaciones.
 - **Refactor:** en la etapa 2 el skeleton solo lo usaban los usuarios, así que era específico (`UserListSkeleton`). Al necesitarlo también las publicaciones, lo generalicé a `ListSkeleton` con un prop `label` en vez de duplicarlo. Prefiero abstraer cuando aparece un segundo caso real (YAGNI) antes que adivinarlo de antemano.
 - **Qué indiqué yo:** que el layout fuera **responsive mobile-first** y que Context se use para el **tema claro u oscuro**, como ejemplo de estado global (se implementa en la etapa de estilos).
+
+### Etapa 4: Formulario para crear publicaciones
+- **Qué le pedí:** opciones para gestionar el formulario, el momento de validar y cómo añadir la publicación a la lista.
+- **Qué acepté:** validación perezosa y esperar a la respuesta del POST con estado local (sus recomendaciones), y los ids locales negativos para evitar el `id: 101` repetido.
+- **Qué corregí o decidí distinto:** la IA recomendaba un formulario controlado a mano con `useState`. Lo cambié a **React Hook Form**, porque es lo que se usa hoy en la industria y quería demostrarlo. Le pregunté si convenía añadir Zod; me explicó la diferencia (tipo deducido del esquema, `.trim()`, esquema testeable) y elegí **RHF + Zod**.
+- **Corrección de la IA durante la revisión:** había ocultado el mensaje de éxito vacío con `display: none`, pero eso saca la región `role="status"` del árbol de accesibilidad y algunos lectores dejarían de anunciarla. Lo quitó.
 
 ## Qué haría con más tiempo
 
