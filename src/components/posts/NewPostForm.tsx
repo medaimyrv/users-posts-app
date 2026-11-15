@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useId } from 'react'
+import { useEffect, useId } from 'react'
 import { useForm } from 'react-hook-form'
 import { newPostSchema, type NewPostFormValues } from './newPostSchema'
 
@@ -34,12 +34,18 @@ export function NewPostForm({ onCreate }: NewPostFormProps) {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await onCreate(values)
-      // Limpia el formulario pero mantiene `isSubmitSuccessful` para mostrar la confirmación.
-      reset(undefined, { keepIsSubmitSuccessful: true })
     } catch {
+      // Con un error en `root`, RHF marca el envío como no exitoso y se conserva lo escrito.
       setError('root', { message: 'No se pudo publicar. Inténtalo de nuevo.' })
     }
   })
+
+  // Patrón recomendado por RHF: limpiar el formulario después de un envío exitoso
+  // (llamar a `reset` dentro de `handleSubmit` choca con su actualización final del estado).
+  // `keepIsSubmitSuccessful` mantiene visible la confirmación.
+  useEffect(() => {
+    if (isSubmitSuccessful) reset(undefined, { keepIsSubmitSuccessful: true })
+  }, [isSubmitSuccessful, reset])
 
   return (
     // `noValidate`: desactiva los globos nativos del navegador; los errores los pinta la app.
