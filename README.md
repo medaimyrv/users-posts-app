@@ -4,9 +4,51 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 
 ## Cómo ejecutarlo
 
-> Se completará al final.
->
-> Nota (Windows): ejecutar los tests desde PowerShell o CMD. Desde Git Bash, Vitest puede fallar con "failed to find the runner" por la letra de unidad en minúscula.
+**Requisitos:** Node.js 22.12 o superior (lo exigen Vitest y MSW) y npm.
+
+```bash
+git clone https://github.com/medaimyrv/users-posts-app.git
+cd users-posts-app
+npm install
+npm run dev          # http://localhost:5173
+```
+
+| Script | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con recarga en caliente |
+| `npm test` | Ejecuta los tests una vez (Vitest) |
+| `npm run test:watch` | Tests en modo watch |
+| `npm run typecheck` | Comprobación de tipos con TypeScript |
+| `npm run lint` | Linter (oxlint) |
+| `npm run build` | Typecheck y build de producción en `dist/` |
+| `npm run preview` | Sirve el build de producción en local |
+
+> **Nota (Windows):** ejecuta los tests desde PowerShell o CMD. Desde Git Bash, Vitest puede fallar con "failed to find the runner" por la letra de unidad en minúscula (`/d/...`).
+
+### Estructura
+
+```
+src/
+├── api/            # axios (client.ts) y endpoints de JSONPlaceholder
+├── components/
+│   ├── common/     # Reutilizables: SearchBox, ErrorMessage, ListSkeleton, ThemeToggle, estilos de Panel y Button
+│   ├── users/      # UsersPanel (contenedor), UserList, filterUsersByName
+│   └── posts/      # PostsPanel (contenedor), PostList, NewPostForm, esquema Zod
+├── hooks/          # useAsyncData (genérico), useUsers, useUserPosts
+├── theme/          # ThemeContext, ThemeProvider y useTheme (tema claro/oscuro)
+├── styles/         # global.css: tokens de diseño, reset y utilidades
+├── test/           # Setup de Vitest y servidor/handlers de MSW
+├── types/          # Tipos de dominio (User, Post, NewPost)
+└── utils/          # normalizeText (búsqueda sin tildes)
+```
+
+### Funcionalidades
+- Lista de usuarios con búsqueda por nombre (sin distinguir mayúsculas ni tildes).
+- Publicaciones del usuario seleccionado y creación de nuevas con formulario validado.
+- Estados de carga (skeleton), error (con reintento) y vacío en cada lista.
+- Tema claro/oscuro que sigue al sistema y recuerda la elección.
+- Responsive mobile-first y accesible (teclado, lectores de pantalla, contraste AA).
+- 10 tests: 7 de integración sobre la app completa y 3 unitarios del esquema de validación.
 
 ## Decisiones
 
@@ -21,7 +63,7 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 | Datos del servidor | **Hooks propios** con `useState` + `useEffect` (`useAsyncData`, `useUsers`, `useUserPosts`) | TanStack Query | Coherente con la decisión de usar `useState` y sin dependencias. Es el patrón clásico de `useEffect`, extraído a un hook: estado como unión discriminada (`loading`, `error`, `success`), cancelación con `AbortController` contra *race conditions* y `retry`. Cuando cambia el parámetro (el usuario), el componente se reinicia con `key={userId}`. TanStack Query (caché, reintentos, deduplicación) sería la elección en una app mayor. |
 | Estado de carga | **Skeleton** con la forma de la lista + texto "Cargando…" solo para lectores de pantalla (`role="status"`) | Spinner, solo texto | Reduce la espera percibida y evita saltos de layout. El skeleton es decorativo (`aria-hidden`) y respeta `prefers-reduced-motion`. |
 | Búsqueda | En el cliente, **en cada pulsación**, sin distinguir mayúsculas ni tildes | Debounce, búsqueda en servidor | La API solo tiene 10 usuarios y no ofrece búsqueda parcial, así que se filtra en memoria la lista ya cargada. Un debounce solo añadiría retraso; lo usaría si la búsqueda pasara al servidor o la lista fuera muy grande. |
-| Componentes | Contenedor (`UsersPanel`: datos y búsqueda) + presentacionales (`UserList`, `UserListSkeleton`, `SearchBox`, `ErrorMessage`) + lógica pura (`filterUsersByName`) | Un solo componente grande | Responsabilidad única. Los presentacionales son reutilizables y la lógica pura se testea sin renderizar. |
+| Componentes | Contenedor (`UsersPanel`: datos y búsqueda) + presentacionales (`UserList`, `ListSkeleton`, `SearchBox`, `ErrorMessage`) + lógica pura (`filterUsersByName`) | Un solo componente grande | Responsabilidad única. Los presentacionales son reutilizables y la lógica pura se testea sin renderizar. |
 | Usuario seleccionado | **`useState` en `App`** + props (estado subido al padre común) | Context, React Router (`/users/:id`) | Lo comparten dos componentes hermanos a un solo nivel, así que no hay *prop drilling*. Context lo reservo para algo de verdad global, el tema claro u oscuro. Router daría URL compartible y botón atrás (ver "Qué haría con más tiempo"). |
 | Reinicio al cambiar de usuario | `<PostsPanel key={user.id} />` | Sincronizar el estado en un efecto | Cambiar la `key` hace que React monte el componente de nuevo: el estado vuelve a `loading` y el cleanup cancela la petición anterior. |
 | Disposición | **Maestro-detalle, mobile-first**: una columna en móvil y dos desde 48rem | Vista de detalle con botón "Volver" | Lista y publicaciones visibles a la vez en escritorio. En móvil, al seleccionar, el foco pasa al título de las publicaciones y la vista se desplaza hasta ellas. |
@@ -102,10 +144,23 @@ He usado Claude Code (Claude Opus 5.5) como asistente durante toda la prueba, tr
 - **Qué indiqué yo:** usar **Context para el tema claro/oscuro** como ejemplo de estado global (lo decidí en la etapa 3) y que hubiera un **botón** para cambiarlo.
 - **Tests:** se añadió un test del tema (alterna `data-theme` y guarda la elección), y los tests renderizan la app con su `ThemeProvider` igual que `main.tsx`.
 
+### Etapa 7: Cierre
+- **Qué le pedí:** completar el README (cómo ejecutarlo, qué haría con más tiempo y tiempo total) y una revisión final.
+- **Qué acepté:** la documentación de scripts y estructura, la lista de mejoras y `engines` en `package.json` (Node 22.12 o superior, que exigen Vitest y MSW).
+- **Revisión final:** typecheck, lint, tests y build en verde.
+
 ## Qué haría con más tiempo
 
-> Se completará al final.
+- **TanStack Query** para los datos del servidor: caché (volver a un usuario no repetiría la petición), reintentos automáticos y actualización de la caché tras crear una publicación.
+- **Conservar las publicaciones creadas al cambiar de usuario.** Ahora viven en el estado local de `PostsPanel` y se pierden al reiniciarlo con `key`. Las guardaría en la caché de TanStack Query o en un estado por `userId` en el padre.
+- **React Router** (`/users/:id`): URL compartible, botón atrás del navegador y que la selección sobreviva a recargar.
+- **Validar las respuestas de la API con Zod**, en lugar de confiar en el genérico de axios (`get<User[]>`).
+- **Actualización optimista** al crear, con *rollback* si falla.
+- **Más tests:** hooks aislados (`useAsyncData`, cancelación al desmontar), tests E2E con Playwright y auditoría automática de accesibilidad con `axe` (`vitest-axe` o `@axe-core/playwright`).
+- **Seguir los cambios de tema del sistema en vivo** (listener de `matchMedia`) mientras el usuario no haya elegido.
+- **Paginación o virtualización** si la lista creciera, y entonces sí debounce con búsqueda en servidor.
+- **CI** (GitHub Actions con lint, typecheck, tests y build) y despliegue en Vercel o Netlify.
 
 ## Tiempo total
 
-> Se completará al final.
+**Unas 1 h 45 min** de las 3 h disponibles: planificación (unos 10 min), desarrollo por etapas con commits de 11:03 a 12:27 y cierre (README final y revisión). El historial de commits muestra el avance etapa por etapa.
