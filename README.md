@@ -17,6 +17,9 @@ Pequeña app con React y TypeScript que consume la API pública [JSONPlaceholder
 | Tipado | TypeScript `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` | `strict` solo | Detecta más errores en tiempo de compilación (accesos a arrays que pueden ser `undefined` y propiedades opcionales mal usadas). |
 | Peticiones HTTP | **axios** (instancia con `baseURL` en `src/api/client.ts`) | `fetch` nativo con un wrapper propio | Empecé con `fetch`, pero obligaba a escribir un wrapper (comprobar `res.ok`, una clase de error propia, serializar el body). Axios ya rechaza las respuestas no 2xx y gestiona el JSON, así que el código queda más corto y fácil de explicar. Es una dependencia muy extendida en la industria. |
 | Datos del servidor | **Hooks propios** con `useState` + `useEffect` (`useAsyncData`, `useUsers`, `useUserPosts`) | TanStack Query | Coherente con la decisión de usar `useState` y sin dependencias. Es el patrón clásico de `useEffect`, extraído a un hook: estado como unión discriminada (`loading`, `error`, `success`), cancelación con `AbortController` contra *race conditions* y `retry`. Cuando cambia el parámetro (el usuario), el componente se reinicia con `key={userId}`. TanStack Query (caché, reintentos, deduplicación) sería la elección en una app mayor. |
+| Estado de carga | **Skeleton** con la forma de la lista + texto "Cargando…" solo para lectores de pantalla (`role="status"`) | Spinner, solo texto | Reduce la espera percibida y evita saltos de layout. El skeleton es decorativo (`aria-hidden`) y respeta `prefers-reduced-motion`. |
+| Búsqueda | En el cliente, **en cada pulsación**, sin distinguir mayúsculas ni tildes | Debounce, búsqueda en servidor | La API solo tiene 10 usuarios y no ofrece búsqueda parcial, así que se filtra en memoria la lista ya cargada. Un debounce solo añadiría retraso; lo usaría si la búsqueda pasara al servidor o la lista fuera muy grande. |
+| Componentes | Contenedor (`UsersPanel`: datos y búsqueda) + presentacionales (`UserList`, `UserListSkeleton`, `SearchBox`, `ErrorMessage`) + lógica pura (`filterUsersByName`) | Un solo componente grande | Responsabilidad única. Los presentacionales son reutilizables y la lógica pura se testea sin renderizar. |
 | Arquitectura | `types/` (dominio), `api/` (transporte y endpoints), `hooks/` (ciclo de vida de los datos) | Todo dentro de los componentes | Responsabilidad única: los componentes solo pintan. `useAsyncData` recibe la función de carga como parámetro, así que sirve para cualquier endpoint sin modificarlo (abierto/cerrado). |
 
 **Principios generales:** código claro, buenas prácticas de UX/UI y accesibilidad, y principios SOLID aplicados con criterio, sin ser puristas.
@@ -45,6 +48,11 @@ He usado Claude Code (Claude Opus 5.5) como asistente durante toda la prueba, tr
   - Al revisar el código antes del commit vi que el wrapper de `fetch` tenía demasiado código propio que luego tendría que explicar. Le pedí cambiar a **axios**, que ofrece lo mismo con menos código.
   - Le pregunté qué resolvía exactamente `useAsyncData`. Su versión calculaba `loading` en el render comparando la petición actual con la última resuelta, para evitar un `setState` síncrono en el efecto que el linter había marcado. Era correcta pero difícil de explicar, así que elegí **simplificarla**: el hook ahora es el patrón clásico de `useEffect`, y el reinicio al cambiar de usuario se hace con `key={userId}`.
 - **Verificación:** probé los endpoints contra la API real para confirmar la forma de las respuestas y que el POST devuelve siempre `id: 101`.
+
+### Etapa 2: Lista de usuarios con búsqueda
+- **Qué le pedí:** opciones para mostrar la carga y para decidir cuándo filtrar.
+- **Qué acepté:** el skeleton (su recomendación), la búsqueda sin distinguir mayúsculas ni tildes, el contador de resultados anunciado a lectores de pantalla, el mensaje de "sin resultados" y la separación entre contenedor y componentes presentacionales.
+- **Qué corregí o decidí distinto:** la IA recomendaba filtrar en cada pulsación, sin debounce. Primero elegí añadir debounce con un custom hook (`useDebouncedValue`) para demostrar el patrón. Al revisarlo me di cuenta de que el filtro se hace en memoria sobre la lista ya cargada, así que el debounce no ahorraba nada y solo retrasaba el resultado 300 ms. **Lo quité.**
 
 ## Qué haría con más tiempo
 
